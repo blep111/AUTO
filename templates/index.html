@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>𝗙𝗔𝗖𝗘𝗕𝗢𝗢𝗞 𝗔𝗨𝗧𝗢𝗦𝗛𝗔𝗥𝗘</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #000;
+      color: #0ff;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: 100vw;
+      background: rgba(0, 0, 0, 0.95);
+      color: #00ffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      flex-direction: column;
+      animation: fadeOut 1s ease-in-out forwards;
+      animation-delay: 3s;
+    }
+
+    #loading-screen h1 {
+      font-size: 32px;
+      animation: glowText 1.5s infinite alternate;
+    }
+
+    @keyframes glowText {
+      from { text-shadow: 0 0 10px #00ffff; }
+      to { text-shadow: 0 0 30px #00ffff; }
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+
+    #main-content {
+      opacity: 0;
+      z-index: 2;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      animation: fadeIn 1s ease-in-out forwards;
+      animation-delay: 3.5s;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    .container {
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      border: 2px solid #0ff;
+      padding: 40px 30px;
+      border-radius: 15px;
+      background-color: rgba(0, 10, 20, 0.75);
+      box-shadow: 0 0 25px #0ff;
+      backdrop-filter: blur(6px);
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      from { box-shadow: 0 0 10px #0ff; }
+      to { box-shadow: 0 0 30px #0ff; }
+    }
+
+    h2 {
+      margin-bottom: 25px;
+      font-size: 24px;
+      color: #00ffff;
+      text-shadow: 0 0 10px #0ff;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 12px;
+      background: rgba(0, 20, 20, 0.85);
+      border: 1px solid #0ff;
+      border-radius: 6px;
+      color: #0ff;
+      font-size: 1rem;
+      outline: none;
+      transition: 0.3s;
+    }
+
+    input::placeholder {
+      color: #088;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: bold;
+      text-shadow: 0 0 5px #0ff;
+    }
+
+    button:hover {
+      background: #011;
+      box-shadow: 0 0 15px #0ff, 0 0 25px #0ff;
+    }
+
+    .log {
+      margin-top: 20px;
+      background: rgba(0, 30, 30, 0.7);
+      padding: 15px;
+      border: 1px solid #044;
+      border-radius: 6px;
+      color: #0f0;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      box-shadow: inset 0 0 5px #022;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        width: 90%;
+        padding: 30px 20px;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      input, button {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="matrix"></canvas>
+
+<div id="loading-screen">
+  <h1>ʟᴏᴀᴅɪɴɢ ᴅᴀsʜʙᴏᴀʀᴅ...</h1>
+</div>
+
+<div id="main-content">
+  <div class="container">
+    <h2>𝗙𝗔𝗖𝗘𝗕𝗢𝗢𝗞 𝗔𝗨𝗧𝗢𝗦𝗛𝗔𝗥𝗘</h2>
+    <input id="cookie" placeholder="🔐 FB Cookie">
+    <input id="link" placeholder="🔗 Post Link">
+    <input id="limit" placeholder="📊 Share Limit" type="number" value="10">
+    <button onclick="startShare()">𝗦𝗛𝗔𝗥𝗘</button>
+    <div class="log" id="log">Awaiting input...</div>
+  </div>
+</div>
+
+<script>
+  async function startShare() {
+    const cookie = document.getElementById('cookie').value;
+    const link = document.getElementById('link').value;
+    const limit = document.getElementById('limit').value;
+    const log = document.getElementById('log');
+    log.textContent = '⏳ Working...';
+
+    try {
+      const res = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cookie, link, limit })
+      });
+
+      const json = await res.json();
+      log.textContent = json.message;
+    } catch (err) {
+      log.textContent = "❌ Error occurred while sharing!";
+    }
+  }
+
+  // MATRIX BACKGROUND SCRIPT
+  const canvas = document.getElementById('matrix');
+  const ctx = canvas.getContext('2d');
+
+  canvas.height = window.innerHeight;
+  canvas.width = window.innerWidth;
+
+  const letters = "VERNVERNVERNVERNVERNVERNVERNVERNVERNVERN";
+  const fontSize = 14;
+  const columns = canvas.width / fontSize;
+  const drops = Array.from({ length: columns }, () => 1);
+
+  function drawMatrix() {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#0ff";
+    ctx.font = fontSize + "px monospace";
+
+    for (let i = 0; i < drops.length; i++) {
+      const text = letters.charAt(Math.floor(Math.random() * letters.length));
+      ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+      if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+      drops[i]++;
+    }
+  }
+
+  setInterval(drawMatrix, 33);
+</script>
+</body>
+  </html>
